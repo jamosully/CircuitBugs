@@ -9,8 +9,8 @@ directions = [
     (0,-1),(1,-1)
 ]
 
-BOARD_COL = (0.09, 0.3, 0.09)
-WIRE_COL = (0.6, 0.5, 0.25)
+BOARD_COL = (0.00, 0.0, 0.00)
+WIRE_COL = (1.0, 1.0, 1.0)
 #WIRE_COL = (0.15, 0.35, 0.15)
 HOLE_COL = (0,0,0)
 cellSize = 20
@@ -26,7 +26,8 @@ numWires = 80
 cells = []
 W = cellSize * numCols
 H = cellSize * numRows
-surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,W,H)
+#surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,W,H)
+surface = cairo.SVGSurface("test.svg", W, H)
 ctx = cairo.Context(surface)
 
 

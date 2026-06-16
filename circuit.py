@@ -47,6 +47,6 @@ for wire in wires:
             if len(fork.cells) > 1:
                 fork.draw_wire()
 #draw_grid()
-surface.write_to_png('./circuit.png')
+#surface.write_to_png('./circuit.png')
 
 
