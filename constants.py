@@ -26,8 +26,8 @@ numWires = 80
 cells = []
 W = cellSize * numCols
 H = cellSize * numRows
-#surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,W,H)
-surface = cairo.SVGSurface("test.svg", W, H)
+surface = cairo.ImageSurface(cairo.FORMAT_ARGB32,W,H)
+#surface = cairo.SVGSurface("test.svg", W, H)
 ctx = cairo.Context(surface)
 
 
