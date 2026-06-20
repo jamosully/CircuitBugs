@@ -38,5 +38,5 @@ def print_image(printer, image_path, printer_settings):
 
 printer_settings  = get_printer_settings("printer_settings.json")
 printer = setup_printer(printer_settings)
-print_image(printer, "circuit.png", printer_settings)
+print_image(printer, "test.png", printer_settings)
 printer.cut()

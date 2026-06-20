@@ -2,11 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script src={{ url_for('send_js', path='p5js/lib/p5.js')}}></script>
+    <script src={{ url_for('send_js', path='svgo.browser.js')}}></script>
     <script src="https://unpkg.com/p5.js-svg@1.6.0"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0, maximum-scale=1">
     <title>arebyte-web-interface</title>
     <link rel="stylesheet" href="../css/style.css">
-    <script src={{ url_for('send_js', path='p5.min.js') }}></script>
 </head>
 <body>
     <div id="main">
