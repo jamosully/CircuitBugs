@@ -1,14 +1,15 @@
-const canvasWidth = 576;
+const canvasWidth = 576; // 1: 1.4
 const canvasHeight = 800
+var addVertex = false;
+var eraseShape = false;
+var oppCoords = []
 
 function setup() {
   // Create the drawing canvas
-  var canvas = createCanvas(canvasWidth / 2, canvasHeight, SVG);
+  var canvas = createCanvas(canvasWidth, canvasHeight, SVG);
   canvas.parent("main");
   canvas.id("drawing");
   disableScrollOnCanvas(canvas);
-
-  var mirrorCanvas - createCanvas(canvasWidth / 2, canvasHeight)
 
   // Create the completion button
   let designButton = createButton('Confirm Design!');
@@ -30,11 +31,19 @@ function setup() {
   // Adjust stroke
   strokeJoin(BEVEL);
 
+  // Separate the two canvases
+  line(canvasWidth / 2, 0, canvasWidth / 2, canvasHeight - 10);
+
   // Set width of the lines
   strokeWeight(4);
 
   // Set color mode to hue-saturation-brightness (HSB)
   colorMode(HSB);
+
+  // Set timer for the drawer
+  var vertexTimer = setInterval(function(){
+    addVertex = !addVertex
+  }, 1000);
 }
 
 function windowResized(event) {
@@ -53,29 +62,59 @@ function windowResized(event) {
 
 function mousePressed() {
   // Start the shape when the user clicks
-  beginShape();
+  if (mouseX < canvasWidth / 2)
+  {
+    oppCoords = [];
+    beginShape(TESS);
+  };
 }
 
 function mouseDragged() {
   // Add a vertex to the shape as the mouse drags
-  vertex(mouseX, mouseY);
+  if (mouseX < canvasWidth / 2) //&& addVertex)
+  {
+    vertex(mouseX, mouseY);
+    oppCoords.push([canvasWidth - mouseX, mouseY]);
+    stroke(10);
+  }
 }
 
 function mouseReleased() {
   // End the shape when the mouse is released
-  endShape();
+  if (mouseX < canvasWidth / 2)
+  {
+    oppCoords.reverse();
+    console.log(oppCoords);
+    for (var i = 0; i < oppCoords.length; i++) 
+    {
+      vertex(oppCoords[i][0], oppCoords[i][1]);
+    }
+    endShape(CLOSE);
+    //console.log("Drawing...");
+    //copy(canvas, 0, 0, canvasWidth/2, canvasHeight, -canvasWidth, 0, canvasWidth/2, canvasHeight);
+  }
 }
 
 function touchStarted() {
-  beginShape();
+  if (mouseX < canvasWidth / 2)
+  {
+    beginShape(TESS)
+  };
 }
 
 function touchMoved() {
-  vertex(mouseX, mouseY);
+  if (mouseX < canvasWidth / 2)
+  {
+    vertex(mouseX, mouseY);
+  }
 }
 
 function touchEnded() {
-  endShape();
+  if (mouseX < canvasWidth / 2)
+  {
+    endShape(CLOSE);
+    //copy(canvas, 0, 0, width/2, heigh, -width, 0, width/2, height);
+  }
 }
 
 function exportSVG() {
@@ -96,6 +135,7 @@ function exportSVG() {
 
 function clearDesign() {
   clear();
+  line(canvasWidth / 2, 0, canvasWidth / 2, canvasHeight - 10);
 }
 
 function disableScrollOnCanvas(canvas) {
