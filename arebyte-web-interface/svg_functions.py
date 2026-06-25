@@ -1,5 +1,6 @@
 import xml.etree.ElementTree as ET
 import svgwrite
+import cairosvg
 from PIL import Image, ImageDraw
 import cv2
 
@@ -53,4 +54,12 @@ def add_alpha_mask(input_png, mask_png, output_png):
 
     cv2.imwrite(output_png, background)
 
-add_alpha_mask("circuit.png", "fish.png", "test.png")
+def convert_to_png(input_svg, output_png):
+
+    with open(input_svg, "r") as input_svg_file:
+        svg2convert = input_svg_file.read()
+
+    cairosvg.svg2png(svg2convert, write_to=output_png)
+
+convert_to_png("generated_images\\svgs\\6PDQGD.svg",
+               "generated_images\\pngs\\6PDQGD.png")

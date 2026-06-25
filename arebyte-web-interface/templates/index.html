@@ -1,16 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <script src={{ url_for('send_js', path='p5js/lib/p5.js')}}></script>
+    <script src={{ url_for('send_js', path='p5js/lib/p5.js' )}}></script>
     <script src="https://unpkg.com/p5.js-svg@1.6.0"></script>
     <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0, maximum-scale=1">
     <title>arebyte-web-interface</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
+
 <body>
-    <div id="main">
-        <script src={{ url_for('send_static', path='sketch.js') }}></script>
+    <div id="parent">
+        <div id="title">
+            <h1>
+                Touch and hold!
+            </h1>
+        </div>
+        <div id="main">
+            <script src={{ url_for('send_static', path='sketch_v2.js' ) }}></script>
+        </div>
+        <div id="buttons">
+            
+        </div>
     </div>
 </body>
+
 </html>

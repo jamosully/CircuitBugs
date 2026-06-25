@@ -75,7 +75,7 @@ function mouseDragged() {
   {
     vertex(mouseX, mouseY);
     oppCoords.push([canvasWidth - mouseX, mouseY]);
-    stroke(10);
+    line(pmouseX, pmouseY, mouseX, mouseY);
   }
 }
 

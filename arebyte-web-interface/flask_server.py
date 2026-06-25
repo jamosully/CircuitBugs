@@ -5,7 +5,9 @@ import random
 import string
 
 app = Flask(__name__)
-SVG_FOLDER="bugs"
+SVG_FOLDER = "generated_images/svgs"
+PNG_FOLDER = "generated_images/pngs"
+TEXT_FOLDER = "generated_text"
 
 @app.route('/')
 def home():
@@ -23,8 +25,8 @@ def send_static(path):
 def send_js(path):
     return send_from_directory('js', path)
 
-@app.route('/upload_bug', methods=['POST'])
-def upload_bug():
+@app.route('/upload_svg', methods=['POST'])
+def upload_svg():
     req_data = request.get_json()
     svg_content = req_data.get('svg_data')
 
