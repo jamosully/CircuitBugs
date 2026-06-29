@@ -35,8 +35,3 @@ def print_image(printer, image_path, printer_settings):
         img.save(image_path)
 
     printer.image(image_path, center=True)
-
-printer_settings  = get_printer_settings("printer_settings.json")
-printer = setup_printer(printer_settings)
-print_image(printer, "test.png", printer_settings)
-printer.cut()

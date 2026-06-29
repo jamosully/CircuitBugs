@@ -60,6 +60,5 @@ def convert_to_png(input_svg, output_png):
         svg2convert = input_svg_file.read()
 
     cairosvg.svg2png(svg2convert, write_to=output_png)
-
-convert_to_png("generated_images\\svgs\\6PDQGD.svg",
-               "generated_images\\pngs\\6PDQGD.png")
+    
+    return output_png

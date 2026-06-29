@@ -3,11 +3,18 @@ import os
 import time
 import random
 import string
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+import output_controller as output
 
 app = Flask(__name__)
 SVG_FOLDER = "generated_images/svgs"
 PNG_FOLDER = "generated_images/pngs"
 TEXT_FOLDER = "generated_text"
+
+app.wsgi_app = ProxyFix(
+    app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+)
 
 @app.route('/')
 def home():
@@ -37,16 +44,17 @@ def upload_svg():
     os.makedirs(SVG_FOLDER, exist_ok=True)
 
     # Create a filename for the bug!
-    bug_name = ""
-    while bug_name == "" or bug_name in os.listdir(SVG_FOLDER):
-        bug_name = ''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6)) + ".svg"
+    circuit_name = ""
+    while circuit_name == "" or circuit_name in os.listdir(SVG_FOLDER):
+        circuit_name = ''.join(random.choice(string.ascii_uppercase + string.digits) for i in range(6)) + ".svg"
 
     # Save as a .svg file
-    file_path = os.path.join(SVG_FOLDER, bug_name)
+    file_path = os.path.join(SVG_FOLDER, circuit_name)
     with open(file_path, 'w', encoding='utf-8') as f:
         f.write(svg_content)
 
     # Put the generation functions in motion!
+    output.generate_interation(file_path, circuit_name)
 
     return jsonify({"success": "SVG uploaded successfully", "path": file_path}), 200
 

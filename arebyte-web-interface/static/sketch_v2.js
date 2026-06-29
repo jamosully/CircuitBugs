@@ -31,6 +31,17 @@ var turning_mappings = {
   }
 }
 
+var limitedMappings = {
+  "n": ["n", "ne", "nw"],
+  "ne": ["ne", "n", "e"],
+  "e": ["e", "ne", "se"],
+  "se": ["se", "e", "s"],
+  "s": ["s", "se", "sw"],
+  "sw": ["sw", "s", "w"],
+  "w": ["w", "sw", "nw"],
+  "nw": ["nw", "w", "n"]
+}
+
 // Canvas Parameters
 const maxCanvasWidth = 576;
 const maxCanvasHeight = 576;
@@ -53,19 +64,32 @@ var half_turn_rate = 0.8;
 // var wall_placements=[0,0,0,0];
 var end_size = 10; // Controls the size of the circle at the end of a wire
 var frames = 0; // Starting frame value
-var death_chance = 3; // Controls how quickly a branch can propagate for WARNING, HIGHER VALUES LAG 
+var death_chance = 4; // Controls how quickly a branch can propagate for WARNING, HIGHER VALUES LAG 
 var general_turn_rate = 0.01;
+var circuitDrawn = false;
+var circuitRadius = 240;
 
 var drawing_nodes = []
 var closed_set = []
 var line_thickness = 2;
 var circle_thickness = 3;
-var min_initial_dist = 75;
+var min_initial_dist = 20;
 
+// Sampler
+const shuffle = ([...arr]) => {
+  let m = arr.length;
+  while (m) {
+    const i = Math.floor(Math.random() * m--);
+    [arr[m], arr[i]] = [arr[i], arr[m]];
+  }
+  return arr;
+};
+const sampleSize = ([...arr], n = 1) => shuffle(arr).slice(0, n);
 
 function setup() {
 
   // Create canvas
+  canvasWidth, canvasWidth = calculateCanvasSize();
   circuitCanvas = createCanvas(canvasWidth, canvasHeight, SVG);
 
   // Set colours and stroke strengths
@@ -80,7 +104,7 @@ function setup() {
   stroke(line_color)
 
   // Create the completion button
-  let designButton = createButton('Confirm Design!');
+  let designButton = createButton('Print Design');
   designButton.parent("buttons");
   designButton.position(0, 0, "relative");
   designButton.mousePressed(exportSVG);
@@ -92,71 +116,142 @@ function setup() {
   clearButton.position(0, 0, "relative");
   clearButton.mousePressed(clearDesign);
   clearButton.size(150, 50);
+
+  // Add holes to canvas
+  // addDrillHoles();
 }
 
 function draw() {
-  drawing_nodes.forEach(function(node){
+  drawing_nodes.forEach(function (node) {
     node.move();
-    if(node.min_dist>0){//block propigation if fixed length defined
-      node.min_dist-=draw_speed;
+    if (node.min_dist > 0) {//block propigation if fixed length defined
+      node.min_dist -= draw_speed;
       node.draw();
     }
-    else{
+    else {
       node.check_terminate();
       node.turn_random()
       node.draw();
       node.propigate();
     }
   })
-   closed_set.forEach(function(node){
-     node.make_circle_bigger();
-   });
+  closed_set.forEach(function (node) {
+    node.make_circle_bigger();
+  });
   frames++;
- // console.log(drawing_nodes[0]);
-  
+  // console.log(drawing_nodes[0]);
+
+}
+
+function addDrillHoles() {
+  let holeDiameter = 15;
+  let xPadding = 25;
+  let yPadding = 25;
+
+  erase();
+  circle(xPadding, yPadding, holeDiameter);
+  circle(width - xPadding, yPadding, holeDiameter);
+  circle(xPadding, height - yPadding, holeDiameter);
+  circle(width - xPadding, height - yPadding, holeDiameter);
+  noErase();
+}
+
+function calculateCanvasSize() {
+  let w, h = 0;
+  if (innerWidth <= maxCanvasWidth) {
+    if (innerWidth <= innerHeight) {
+      w = innerWidth;
+      h = innerWidth;
+    }
+    else {
+      w = innerHeight;
+      h = innerHeight;
+    }
+  }
+  else {
+    w = maxCanvasWidth;
+    h = maxCanvasHeight;
+  }
+  return w, h;
+}
+
+function windowResized(event) {
+  canvasWidth, canvasHeight = calculateCanvasSize();
+  resizeCanvas(canvasWidth, canvasHeight);
 }
 
 function exportSVG() {
+  if (circuitDrawn) {
+    var svgFile = document.getElementsByTagNameNS("http://www.w3.org/2000/svg", "svg")[0]
 
-  // Delete the background before getting the drawing
-  currentBackground = '';
+    var svgString = new XMLSerializer().serializeToString(svgFile);
 
-  var svgFile = document.getElementsByTagNameNS("http://www.w3.org/2000/svg", "svg")[0]
-
-  var svgString = new XMLSerializer().serializeToString(svgFile);
-
-  fetch('/upload_svg', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ svg_data: svgString })
-  })
-    .then(response => response.json())
-    .then(data => console.log(data));
+    fetch('/upload_svg', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ svg_data: svgString })
+    })
+      .then(response => response.json())
+      .then(data => console.log(data));
+  }
 }
 
 function clearDesign() {
   clear();
   currentBackground = background(bg_color);
+  circuitDrawn = false;
+  // addDrillHoles();
 }
 
 function mousePressed() {
 
   let isOnCanvas = (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height);
-  if (isOnCanvas) {
+  if (isOnCanvas && !circuitDrawn) {
     ["n", "ne", "e", "se", "s", "sw", "w", "nw"].forEach(
       function (direction) {
         //drawing_nodes.push(new drawing_node(mouseX,mouseY,direction))
         drawing_nodes.push(new drawing_node(
           canvasWidth / 2,
           canvasHeight / 2,
+          direction,
+          0,
           direction
         ))
       });
+    circuitDrawn = true;
   }
 
 }
+
+function touchStarted() {
+  let isOnCanvas = (mouseX >= 0 && mouseX <= width && mouseY >= 0 && mouseY <= height);
+  if (isOnCanvas && !circuitDrawn) {
+    ["n", "ne", "e", "se", "s", "sw", "w", "nw"].forEach(
+      function (direction) {
+        //drawing_nodes.push(new drawing_node(mouseX,mouseY,direction))
+        drawing_nodes.push(new drawing_node(
+          canvasWidth / 2,
+          canvasHeight / 2,
+          direction,
+          0,
+          direction
+        ))
+      });
+    circuitDrawn = true;
+  }
+}
+
+// function mouseReleased() {
+
+//   noLoop();
+//   drawing_nodes.forEach(
+//     function (node) {
+//       node.terminate_true;
+//     }
+//   );
+// }
 
 // function gen_nodes(){
 
@@ -205,95 +300,108 @@ function remove_node(node, add_to_closed_set, source_array) {
   source_array.splice(source_array.indexOf(node), 1);
 }
 
-function drawing_node(x,y,direction,genaration){
-  this.x_last=this.x=x;
-  this.y_last=this.y=y;
-  this.direction=direction;
-  this.direction_vector=direction_mappings[direction];
+function drawing_node(x, y, direction, genaration, originalDirection) {
+  this.x_last = this.x = x;
+  this.y_last = this.y = y;
+  this.direction = direction;
+  this.startingDirection = originalDirection;
+  this.direction_vector = direction_mappings[direction];
 
-  this.thickness=0;
-  this.genaration=genaration || 1;
-  if(this.genaration==1){
-    this.min_dist=min_initial_dist;
+  this.thickness = 0;
+  this.genaration = genaration || 1;
+  if (this.genaration == 1) {
+    this.min_dist = min_initial_dist;
   }
-  else{
-    this.min_dist=0;
+  else {
+    this.min_dist = 0;
   }
-  this.move=function(){
-  
+  this.move = function () {
+
     //console.log(this,direction_mappings);
-    this.x_last=this.x;
-    this.y_last=this.y;
-    this.x+=this.direction_vector[0]*draw_speed;
-    this.y+=this.direction_vector[1]*draw_speed;
+    this.x_last = this.x;
+    this.y_last = this.y;
+    this.x += this.direction_vector[0] * draw_speed;
+    this.y += this.direction_vector[1] * draw_speed;
   }
-  this.draw=function(){
-    line(this.x_last,this.y_last,this.x,this.y)
+  this.draw = function () {
+    line(this.x_last, this.y_last, this.x, this.y)
   }
-  this.go_left=function(){
-    this.direction=turning_mappings["left"][this.direction]
-    this.direction_vector=direction_mappings[this.direction]
+  this.go_left = function () {
+    // console.log(this.startingDirection);
+    this.direction = turning_mappings["left"][this.direction];
+    this.direction_vector = direction_mappings[this.direction];
   }
-  this.go_right=function(){
-    this.direction=turning_mappings["right"][this.direction]
-    this.direction_vector=direction_mappings[this.direction]
+  this.go_right = function () {
+    // console.log(this.startingDirection);
+    this.direction = turning_mappings["right"][this.direction]
+    this.direction_vector = direction_mappings[this.direction]
   }
-  this.turn_random=function(){
-    if(general_turn_rate>random(0,1)){
-      split_type=random(0,1);
-      if(0.5> random(0,1)){
-        this.go_left()
-        if(split_type>half_turn_rate){
+  this.turn_random = function () {
+
+    if (general_turn_rate > random(0, 1)) {
+      split_type = random(0, 1);
+      if (0.5 > random(0, 1)) {
+        if (this.check_bounds("left")) {
+          this.go_left()
+        }
+        if (split_type > half_turn_rate && this.check_bounds("left")) {
           this.go_left()
         }
       }
-      else{
-        this.go_right()
-        if(split_type>half_turn_rate){
+      else {
+        if (this.check_bounds("right")) {
+          this.go_right()
+        }
+        if (split_type > half_turn_rate && this.check_bounds("right")) {
           this.go_right()
         }
       }
     }
   }
-  this.propigate=function(){
-    if(propogation_threashold/this.genaration>random(1)){
-      split_type=random(0,1);
-      n1=new drawing_node(this.x,this.y,this.direction,this.genaration+1);
-      n2=new drawing_node(this.x,this.y,this.direction,this.genaration+1);
-      n1.go_right();
-      n2.go_left()
-      if(split_type>half_turn_rate){
-        n1.go_right();
-        n2.go_left();
+  this.propigate = function () {
+    if (propogation_threashold / this.genaration > random(1)) {
+      split_type = random(0, 1);
+      n1 = new drawing_node(this.x, this.y, this.direction, this.genaration + 1, this.startingDirection);
+      n2 = new drawing_node(this.x, this.y, this.direction, this.genaration + 1, this.startingDirection);
+      if (n1.check_bounds("right")) { n1.go_right(); }
+      if (n2.check_bounds("left")) { n2.go_left() }
+      if (split_type > half_turn_rate) {
+        if (n1.check_bounds("right")) { n1.go_right(); }
+        if (n2.check_bounds("left")) { n2.go_left(); }
       }
       drawing_nodes.push(n1);
       drawing_nodes.push(n2);
-      remove_node(this,false);
+      remove_node(this, false);
     }
   }
-  this.check_terminate=function(){
-      if(this.x<0||this.x>width||this.y<0||this.y>height){
-        remove_node(this,false);
-        //console.log("ded")
-        return true;
-      }
-      if((propogation_threashold)/death_chance>random(1)){
-        this.terminate()
-      }  
+  this.check_terminate = function () {
+    let d = dist(this.x, this.y, width / 2, height / 2);
+    //if (this.x < 0 || this.x > width || this.y < 0 || this.y > height) {
+    if (d >= circuitRadius) {
+      remove_node(this, false);
+      //console.log("ded")
+      return true;
+    }
+    if ((propogation_threashold) / death_chance > random(1.5)) {
+      this.terminate()
+    }
   }
-  this.terminate=function(){
-    
-    ellipse(this.x,this.y,this.thickness)
-    remove_node(this,true);
+  this.terminate = function () {
+
+    ellipse(this.x, this.y, this.thickness)
+    remove_node(this, true);
   }
-  this.make_circle_bigger=function(){
-    
-    ellipse(this.x,this.y,this.thickness++);
-    if(this.thickness>=end_size){
+  this.make_circle_bigger = function () {
+
+    ellipse(this.x, this.y, this.thickness++);
+    if (this.thickness >= end_size) {
       this.terminate_true()
     }
   }
-  this.terminate_true=function(){
-    remove_node(this,false,closed_set)
+  this.terminate_true = function () {
+    remove_node(this, false, closed_set)
+  }
+  this.check_bounds = function (turn) {
+    return limitedMappings[this.startingDirection].includes(turning_mappings[turn][this.direction]);
   }
 }
